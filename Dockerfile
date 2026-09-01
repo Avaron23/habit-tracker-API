@@ -9,6 +9,8 @@ RUN uv sync --frozen
 
 COPY . .
 
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Открываем порт
 EXPOSE 8000
 
