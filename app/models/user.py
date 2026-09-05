@@ -8,6 +8,6 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    username: Mapped[str] = mapped_column(String(30))
-    hashed_password: Mapped[str] = mapped_column(String)
+    username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
