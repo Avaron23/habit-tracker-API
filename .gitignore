@@ -9,3 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+.idea/.gitignore
+.idea/habit-tracker-API.iml
+.idea/

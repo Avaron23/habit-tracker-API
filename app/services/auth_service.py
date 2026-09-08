@@ -1,9 +1,12 @@
-from app.schemas.user import UserCreate, UserResponse, LoginResponse
+from app.schemas.user import UserCreate, UserResponse, TokenResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 from app.models.user import User
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.models.refresh_token import RefreshToken
+from app.core.security import create_refresh_token, get_token_hash, get_password_hash, verify_password, create_access_token
+from datetime import datetime, timedelta, timezone
+from app.core.config import settings
 
 
 class AuthService:
@@ -30,7 +33,7 @@ class AuthService:
 
 
     @staticmethod
-    async def login(user: UserCreate, db: AsyncSession) -> LoginResponse:
+    async def login(response: Response, user: UserCreate, db: AsyncSession) -> TokenResponse:
         # Получаем юзера из бд
         db_user = await db.scalar(select(User).where(User.username == user.username))
 
@@ -48,7 +51,106 @@ class AuthService:
 
         access_token = create_access_token(data)
 
-        return {
-            "access_token": access_token,
-            "token_type": "bearer"
+        # Тут логика только для рефреш токена
+        refresh_token = create_refresh_token()
+        refresh_token_hash = get_token_hash(refresh_token)
+        refresh_token_expires = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+
+        refresh_token_bd = RefreshToken(
+            user_id=db_user.id,
+            refresh_token_hash=refresh_token_hash,
+            expires_at=refresh_token_expires
+        )
+
+        db.add(refresh_token_bd)
+        await db.commit()
+
+        # Отправим рефреш токен в куки
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=settings.secure_cookie, # if production then True
+            samesite="lax",
+            max_age=604800
+        )
+
+        return TokenResponse(access_token=access_token, token_type="bearer")
+
+
+    @staticmethod
+    async def refresh(response: Response, refresh_token: str | None, db: AsyncSession) -> TokenResponse:
+        # Проверяем передан ли рефреш токен
+        if refresh_token is None:
+                raise HTTPException(status_code=401, detail="Refresh token missing")
+
+        # Хэшируем токен и ищем в бд
+        refresh_token_hash = get_token_hash(refresh_token)
+
+        refresh_token_bd = await db.scalar(select(RefreshToken).where(RefreshToken.refresh_token_hash == refresh_token_hash))
+
+        if not refresh_token_bd or refresh_token_bd.revoked or datetime.now(timezone.utc) >= refresh_token_bd.expires_at:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+        refresh_token_bd.revoked = True
+
+        # Создаём новые токены
+        access_token_data = {
+            "sub": str(refresh_token_bd.user_id)
         }
+        access_token = create_access_token(access_token_data)
+        refresh_token_new = create_refresh_token()
+
+        refresh_token_new_hash = get_token_hash(refresh_token_new)
+        refresh_token_expires = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+        # Создаём новую запись в бд
+        refresh_token_new_bd = RefreshToken(
+            user_id=refresh_token_bd.user_id,
+            refresh_token_hash=refresh_token_new_hash,
+            expires_at=refresh_token_expires
+        )
+
+        db.add(refresh_token_new_bd)
+        await db.commit()
+
+        # Вовзращаем рефреш в куки а аксес в теле
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token_new,
+            httponly=True,
+            secure=settings.secure_cookie, # if production then True
+            samesite="lax",
+            max_age=604800
+        )
+        
+        return TokenResponse(
+            access_token=access_token,
+            token_type="bearer"
+        )
+
+
+    @staticmethod
+    async def logout(response: Response, refresh_token: str | None, db: AsyncSession):
+        response.delete_cookie(
+                    key="refresh_token",
+                    path="/",
+                    domain=None,
+                    secure=settings.secure_cookie, # if production then True
+                    httponly=True,
+                    samesite="lax"
+                )
+        # Проверяем передан ли рефреш токен
+        if refresh_token is None:
+                raise HTTPException(status_code=401, detail="Refresh token missing")
+
+        refresh_token_hash = get_token_hash(refresh_token)
+
+        refresh_token_bd = await db.scalar(select(RefreshToken).where(RefreshToken.refresh_token_hash == refresh_token_hash))   
+        if not refresh_token_bd or refresh_token_bd.revoked or datetime.now(timezone.utc) >= refresh_token_bd.expires_at:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+        refresh_token_bd.revoked = True
+
+        await db.commit()
+
+        return {"message": "Logout succes"}

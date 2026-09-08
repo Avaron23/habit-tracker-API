@@ -2,11 +2,11 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class HabitlogCreate(BaseModel):
+class HabitLogCreate(BaseModel):
     habit_id: int
 
 
-class HabitlogResponse(BaseModel):
+class HabitLogResponse(BaseModel):
     id: int
     habit_id: int
     date: datetime

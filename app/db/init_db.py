@@ -4,7 +4,8 @@ from app.db.base import Base
 
 from app.models.user import User
 from app.models.habit import Habit
-from app.models.habitlog import Habitlog
+from app.models.habitlog import HabitLog
+from app.models.refresh_token import RefreshToken
 
 
 async def init_models():

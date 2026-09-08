@@ -1,8 +1,9 @@
 import jwt
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
-from jwt.exceptions import InvalidTokenError
 from app.core.config import settings
+import hashlib
+import secrets
 
 
 password_hash = PasswordHash.recommended()
@@ -16,6 +17,10 @@ def get_password_hash(password: str):
     return password_hash.hash(password)
 
 
+def get_token_hash(token: str):
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
 
@@ -27,3 +32,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
+
+
+def create_refresh_token():
+    return secrets.token_urlsafe(256)

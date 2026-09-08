@@ -4,8 +4,8 @@ from sqlalchemy import Integer, ForeignKey, DateTime, func
 from datetime import datetime
 
 
-class Habitlog(Base):
-    __tablename__ = "habitslogs"
+class HabitLog(Base):
+    __tablename__ = "habits_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     habit_id: Mapped[int] = mapped_column(Integer, ForeignKey('habits.id'))
