@@ -8,5 +8,5 @@ class HabitLog(Base):
     __tablename__ = "habits_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    habit_id: Mapped[int] = mapped_column(Integer, ForeignKey('habits.id'))
+    habit_id: Mapped[int] = mapped_column(Integer, ForeignKey('habits.id', ondelete="CASCADE"))
     date: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

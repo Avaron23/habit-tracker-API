@@ -8,7 +8,7 @@ class Habit(Base):
     __tablename__ = "habits"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'))
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     title: Mapped[str] = mapped_column(String(30))
     description: Mapped[str] = mapped_column(String)
     goal: Mapped[int] = mapped_column(Integer)
