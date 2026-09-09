@@ -3,7 +3,6 @@ from datetime import datetime
 
 
 class HabitCreate(BaseModel):
-    user_id: int
     title: str
     description: str
     goal: int
