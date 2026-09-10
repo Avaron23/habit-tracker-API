@@ -22,3 +22,9 @@ async def create_habit(habit: HabitCreate, db: AsyncSession = Depends(get_db), c
 async def get_habits(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
 
     return await HabitService.get_habits(db, current_user)
+
+
+@router.get("/{habit_id}", response_model=HabitResponse)
+async def get_habit_by_id(habit_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+
+    return await HabitService.get_habit_by_id(habit_id, db, current_user)
