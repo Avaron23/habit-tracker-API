@@ -45,3 +45,38 @@ class HabitService:
             raise HTTPException(status_code=404, detail="Habit not found")
 
         return HabitResponse.model_validate(habit)
+
+
+    # Изменение привычки по айди
+    @staticmethod
+    async def edit_habit_by_id(habit_data: HabitCreate, habit_id: int, db: AsyncSession, current_user: User) -> HabitResponse:
+
+        habit = await db.scalar(select(Habit).where(Habit.user_id == current_user.id).where(Habit.id == habit_id))
+
+        if not habit:
+            raise HTTPException(status_code=404, detail="Habit not found")
+
+        habit_data_dict = habit_data.model_dump()
+
+        for field, value in habit_data_dict.items():
+            setattr(habit, field, value)
+
+        await db.commit()
+        await db.refresh(habit)
+
+        return HabitResponse.model_validate(habit)
+
+
+    # Удаление привычки по айди
+    @staticmethod
+    async def delete_habit_by_id(habit_id: int, db: AsyncSession, current_user: User) -> dict:
+
+        habit = await db.scalar(select(Habit).where(Habit.user_id == current_user.id).where(Habit.id == habit_id))
+
+        if not habit:
+            raise HTTPException(status_code=404, detail="Habit not found")
+
+        await db.delete(habit)
+        await db.commit()
+
+        return {"message": "Delete succes"}

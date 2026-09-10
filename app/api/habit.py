@@ -28,3 +28,15 @@ async def get_habits(db: AsyncSession = Depends(get_db), current_user: User = De
 async def get_habit_by_id(habit_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
 
     return await HabitService.get_habit_by_id(habit_id, db, current_user)
+
+
+@router.put("/{habit_id}", response_model=HabitResponse)
+async def edit_habit_by_id(habit_data: HabitCreate, habit_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+
+    return await HabitService.edit_habit_by_id(habit_data, habit_id, db, current_user)
+
+
+@router.delete("/{habit_id}", response_model=dict)
+async def delete_habit_by_id(habit_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+
+    return await HabitService.delete_habit_by_id(habit_id, db, current_user)
