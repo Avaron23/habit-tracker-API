@@ -1,12 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-
-
-class HabitLogCreate(BaseModel):
-    habit_id: int
 
 
 class HabitLogResponse(BaseModel):
     id: int
     habit_id: int
     date: datetime
+
+    model_config = ConfigDict(from_attributes=True)

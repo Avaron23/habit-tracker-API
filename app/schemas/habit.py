@@ -1,12 +1,13 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
+from typing import Literal
 
 
 class HabitCreate(BaseModel):
-    title: str
-    description: str
-    goal: int
-    period: str
+    title: str = Field(min_length=1, max_length=30)
+    description: str = Field(min_length=1, max_length=500)
+    goal: int = Field(gt=0)
+    period: Literal["daily", "weekly", "monthly"]
 
 
 class HabitResponse(BaseModel):

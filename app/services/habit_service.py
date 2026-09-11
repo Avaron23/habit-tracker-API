@@ -9,6 +9,7 @@ from typing import List
 
 class HabitService:
 
+
     # Добавление новой привычки
     @staticmethod
     async def create_habit(habit: HabitCreate, db: AsyncSession, current_user: User) -> HabitResponse:
@@ -79,4 +80,4 @@ class HabitService:
         await db.delete(habit)
         await db.commit()
 
-        return {"message": "Delete succes"}
+        return {"message": "Delete success"}
