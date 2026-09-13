@@ -25,7 +25,7 @@ class AuthService:
 
         password_hash = get_password_hash(user.password)
 
-        db_user = User(username=user.username, password_hash=password_hash)
+        db_user = User(username=user.username, timezone=user.timezone, password_hash=password_hash)
 
         try:
             db.add(db_user)
