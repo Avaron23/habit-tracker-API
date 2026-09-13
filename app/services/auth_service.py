@@ -1,4 +1,4 @@
-from app.schemas.user import UserCreate, UserResponse, TokenResponse
+from app.schemas.user import UserCreate, UserResponse, TokenResponse, LoginRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
@@ -40,7 +40,7 @@ class AuthService:
 
 
     @staticmethod
-    async def login(response: Response, user: UserCreate, db: AsyncSession) -> TokenResponse:
+    async def login(response: Response, user: LoginRequest, db: AsyncSession) -> TokenResponse:
         # Получаем юзера из бд
         db_user = await db.scalar(select(User).where(User.username == user.username))
 

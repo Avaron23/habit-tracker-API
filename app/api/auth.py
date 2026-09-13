@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Response, Cookie
-from app.schemas.user import UserCreate, UserResponse, TokenResponse
+from app.schemas.user import UserCreate, UserResponse, TokenResponse, LoginRequest
 from app.db.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.auth_service import AuthService
@@ -21,11 +21,11 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
 
     return await AuthService.login(
         response,
-        UserCreate(
+        LoginRequest(
             username=form_data.username,
             password=form_data.password
         ),
-        db,
+        db
     )
 
 
