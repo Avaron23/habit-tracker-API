@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.models.habitlog import HabitLog
@@ -82,7 +82,20 @@ class HabitLogService:
 
     # Получение всех логов конкретной привычки
     @staticmethod
-    async def get_habit_logs(habit_id: int, db: AsyncSession, current_user: User):
+    async def get_habit_logs(habit_id: int, db: AsyncSession, current_user: User) -> list[HabitLogResponse]:
 
+        # 1. Ищем привычку по юзеру, если нету выкидываем 404
+        habit_exist = await db.scalar(
+            select(Habit)
+            .where(Habit.user_id==current_user.id)
+            .where(Habit.id==habit_id)
+        )
 
-        pass
+        if not habit_exist:
+            raise HTTPException(status_code=404, detail="Habit not found")
+
+        # 2. Получить все логи для этой привычки и вернуть их
+        result = await db.scalars(select(HabitLog).where(HabitLog.habit_id==habit_id).order_by(desc(HabitLog.date)))
+        habitlogs = result.all()
+
+        return [HabitLogResponse.model_validate(habitlog) for habitlog in habitlogs]
