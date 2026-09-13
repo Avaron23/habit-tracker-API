@@ -18,6 +18,7 @@ Backend API для трекера привычек. Проект позволя�
 - учёт часового пояса пользователя;
 - каскадное удаление связанных записей;
 - PostgreSQL и асинхронный SQLAlchemy;
+- Alembic для миграций базы данных;
 - автоматическая OpenAPI-документация через Swagger UI.
 
 ## Стек
@@ -39,7 +40,8 @@ Backend API для трекера привычек. Проект позволя�
 app/
 ├── api/              # HTTP-маршруты FastAPI
 ├── core/             # конфигурация и security-функции
-├── db/               # engine, сессии и инициализация таблиц
+├── db/               # engine и сессии базы данных
+├── alembic/          # конфигурация и версии миграций
 ├── dependencies/     # FastAPI dependencies, включая текущего пользователя
 ├── models/           # SQLAlchemy-модели
 ├── schemas/          # Pydantic-схемы запросов и ответов
@@ -47,6 +49,7 @@ app/
 
 Dockerfile
 docker-compose.yml
+alembic.ini
 pyproject.toml
 uv.lock
 ```
@@ -69,7 +72,7 @@ uv.lock
 Скопируйте `.env.example` в `.env` и задайте значения:
 
 ```env
-DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/habit_db"
+DATABASE_URL="postgresql+asyncpg://postgres:password@db:5432/habit_db"
 POSTGRES_USER="postgres"
 POSTGRES_PASSWORD="password"
 POSTGRES_DB="habit_db"
@@ -96,6 +99,8 @@ SECURE_COOKIE=false
 
 Для локального запуска через обычный HTTP установите `SECURE_COOKIE=false`. В production с HTTPS установите `SECURE_COOKIE=true`.
 
+Для Docker используйте hostname `db` и внутренний порт PostgreSQL `5432`. Для запуска Alembic с Windows через проброшенный порт используйте временный URL с `127.0.0.1:15432`.
+
 Не добавляйте настоящий `.env` в Git. Он уже указан в `.gitignore`.
 
 ## Запуск через Docker Compose
@@ -104,10 +109,10 @@ SECURE_COOKIE=false
 
 ```powershell
 docker compose up --build -d
-docker compose exec backend python -m app.db.init_db
+docker compose exec backend alembic upgrade head
 ```
 
-Команда `init_db.py` запускается внутри backend-контейнера и создаёт таблицы в PostgreSQL.
+Команда `alembic upgrade head` применяет все миграции и создаёт таблицы в PostgreSQL.
 
 После запуска API должен быть доступен по адресу:
 
@@ -137,6 +142,11 @@ DATABASE_URL="postgresql+asyncpg://postgres:password@db:5432/habit_db"
 
 Не добавляйте настоящий `.env` в Docker image. Compose читает его на хосте и передаёт необходимые значения контейнерам через конфигурацию сервисов.
 
+Порт PostgreSQL проброшен на хост как `15432:5432`:
+
+- внутри Docker: `db:5432`;
+- с Windows: `127.0.0.1:15432`.
+
 ### Перезапуск контейнеров
 
 Для обычного перезапуска без удаления данных используйте:
@@ -150,12 +160,12 @@ PostgreSQL volume при этом сохраняется.
 
 ### Полный сброс базы данных
 
-Миграции базы данных пока не подключены. Если схема моделей изменилась и базу нужно пересоздать:
+Если нужна полная пересборка локальной базы после изменения схемы:
 
 ```powershell
 docker compose down -v
 docker compose up --build -d
-docker compose exec backend python -m app.db.init_db
+docker compose exec backend alembic upgrade head
 ```
 
 Флаг `-v` удаляет PostgreSQL volume вместе со всеми данными. Используйте эту команду только для локальной разработки, когда данные не нужны.
@@ -168,7 +178,13 @@ docker compose exec backend python -m app.db.init_db
 uv sync
 ```
 
-Убедитесь, что PostgreSQL запущен и `DATABASE_URL` указывает на него. Затем запустите API:
+Убедитесь, что PostgreSQL запущен и `DATABASE_URL` указывает на него. Если PostgreSQL запущен через Compose, локальный URL должен использовать `127.0.0.1:15432`:
+
+```env
+DATABASE_URL="postgresql+asyncpg://postgres:password@127.0.0.1:15432/habit_db"
+```
+
+Затем запустите API:
 
 ```powershell
 uv run uvicorn app.main:app --reload
@@ -176,21 +192,50 @@ uv run uvicorn app.main:app --reload
 
 API будет доступен по адресу `http://localhost:8000`.
 
-## Инициализация базы данных
+## Миграции базы данных
 
-Для локальной разработки таблицы можно создать командой:
+Схема базы данных управляется Alembic. Первая миграция создаёт таблицы `users`, `habits`, `habit_logs` и `refresh_tokens`, а также индексы и каскадные внешние ключи.
 
-```powershell
-uv run python -m app.db.init_db
-```
-
-Внимание: текущий [init_db.py](app/db/init_db.py) сначала удаляет все таблицы через `drop_all()`, а затем создаёт их заново. Все данные будут удалены. В Docker эта команда должна выполняться внутри backend-контейнера:
+Для применения уже созданных миграций внутри Docker:
 
 ```powershell
-docker compose exec backend python -m app.db.init_db
+docker compose exec backend alembic upgrade head
 ```
 
-Не запускайте эту команду на production-базе. Для безопасного изменения схемы базы данных нужно подключить миграции, например Alembic.
+Для создания новой миграции после изменения SQLAlchemy-моделей:
+
+1. Запустите PostgreSQL:
+
+	```powershell
+	docker compose up -d
+	```
+
+2. Временно укажите URL для запуска Alembic с Windows:
+
+	```powershell
+	$env:DATABASE_URL = "postgresql+asyncpg://postgres:password@127.0.0.1:15432/habit_db"
+	```
+
+3. Создайте миграцию из корня проекта:
+
+	```powershell
+	uv run alembic revision --autogenerate -m "describe schema change"
+	```
+
+4. Удалите временную переменную:
+
+	```powershell
+	Remove-Item Env:DATABASE_URL
+	```
+
+5. Проверьте созданный файл в `app/alembic/versions/`, пересоберите backend и примените миграцию:
+
+	```powershell
+	docker compose up --build -d
+	docker compose exec backend alembic upgrade head
+	```
+
+Миграционный файл нужно коммитить вместе с изменением модели. Не запускайте `app/db/init_db.py` для обычного обновления схемы: этот legacy-скрипт удаляет все таблицы через `drop_all()` и предназначен только для локальных экспериментов.
 
 ## Авторизация
 
@@ -427,8 +472,7 @@ uv run uvicorn app.main:app --reload
 - отдельного `logout all` пока нет;
 - очистка старых и отозванных refresh tokens пока не автоматизирована;
 - access token после logout действует до своего истечения;
-- миграции базы данных пока не подключены;
-- `init_db.py` удаляет существующие таблицы;
+- `init_db.py` остаётся legacy-скриптом и удаляет существующие таблицы;
 - автоматические тесты пока отсутствуют;
 - статистика по привычкам пока не реализована.
 
@@ -437,8 +481,7 @@ uv run uvicorn app.main:app --reload
 Приоритетные следующие шаги:
 
 1. добавить автоматические тесты для auth, habits и habit logs;
-2. подключить Alembic вместо `drop_all/create_all`;
-3. добавить очистку истёкших refresh tokens;
-4. добавить `logout all` при необходимости;
-5. добавить статистику и серии выполнения привычек;
-6. расширить список поддерживаемых часовых поясов.
+2. добавить очистку истёкших refresh tokens;
+3. добавить `logout all` при необходимости;
+4. добавить статистику и серии выполнения привычек;
+5. расширить список поддерживаемых часовых поясов.
