@@ -1,12 +1,14 @@
-from app.schemas.user import UserCreate, UserResponse, TokenResponse, LoginRequest
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
-from fastapi import HTTPException, Response
+from fastapi import HTTPException, Response, status
+
+from app.schemas.user import UserCreate, UserResponse, TokenResponse, LoginRequest
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
 from app.core.security import create_refresh_token, get_token_hash, get_password_hash, verify_password, create_access_token
-from datetime import datetime, timedelta, timezone
 from app.core.config import settings
 
 
@@ -21,7 +23,7 @@ class AuthService:
 
         # Если он существует то выкидываем ошибку
         if existing_user:
-            raise HTTPException(status_code=400, detail="Username already taken")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
 
         password_hash = get_password_hash(user.password)
 
@@ -32,7 +34,7 @@ class AuthService:
             await db.commit()
         except IntegrityError:
             await db.rollback()
-            raise HTTPException(400, "Username already taken")
+            raise HTTPException(status.HTTP_409_CONFLICT, detail="Username already taken")
         
         await db.refresh(db_user)
 
@@ -46,11 +48,11 @@ class AuthService:
 
         # Если он не существует то выкидываем ошибку
         if not db_user:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
         # Проверяем пароль
         if not verify_password(user.password, db_user.password_hash):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
         data = {
             "sub": str(db_user.id)
@@ -74,7 +76,7 @@ class AuthService:
             await db.commit()
         except Exception:
             await db.rollback()
-            raise HTTPException(500, "Failed to refresh token")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to refresh token")
 
         # Отправим рефреш токен в куки
         response.set_cookie(

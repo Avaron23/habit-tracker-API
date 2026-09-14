@@ -67,3 +67,12 @@ def client():
         yield test_client
 
     app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture
+async def db_session(
+    clean_database,
+    anyio_backend,
+):
+    async with TestSessionLocal() as session:
+        yield session
