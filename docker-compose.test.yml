@@ -1,0 +1,11 @@
+name: habit-tracker-tests
+services:
+  test_db:
+    image: postgres:17
+    container_name: habit-test-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: habit_test_db
+    ports:
+      - "15433:5432"

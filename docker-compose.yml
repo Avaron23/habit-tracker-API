@@ -1,3 +1,4 @@
+name: habit-tracker-api
 services:
   backend:
     build: .

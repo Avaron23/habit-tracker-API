@@ -12,9 +12,14 @@ dependencies = [
     "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.15.0",
     "pyjwt[crypto]>=2.13.0",
-    "pytest>=9.1.1",
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "sqlalchemy>=2.0.52",
     "uvicorn>=0.52.4",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.12.0",
+    "pytest>=9.1.1",
 ]
