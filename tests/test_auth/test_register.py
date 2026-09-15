@@ -8,6 +8,9 @@ from app.core.security import verify_password
 from app.models.user import User
 
 
+url = "/auth/register"
+
+
 def test_register_user_successfully(
     client: TestClient,
     clean_database,
@@ -18,7 +21,7 @@ def test_register_user_successfully(
         "timezone": "Europe/Moscow"
     }
 
-    response = client.post("/auth/register", json=user_data)
+    response = client.post(url, json=user_data)
 
     response_data = response.json()
 
@@ -38,7 +41,7 @@ def test_register_rejects_invalid_username(client: TestClient):
         "timezone": "Europe/Moscow"
     }
 
-    response = client.post("/auth/register", json=user_data)
+    response = client.post(url, json=user_data)
 
     response_data = response.json()
 
@@ -53,7 +56,7 @@ def test_register_rejects_invalid_timezone(client: TestClient):
         "timezone": "Invalid timezone"
     }
 
-    response = client.post("/auth/register", json=user_data)
+    response = client.post(url, json=user_data)
 
     response_data = response.json()
 
@@ -67,7 +70,7 @@ def test_register_rejects_request_data_without_required_param(client: TestClient
         "timezone": "Invalid timezone"
     }
 
-    response = client.post("/auth/register", json=user_data)
+    response = client.post(url, json=user_data)
 
     response_data = response.json()
 
@@ -86,7 +89,7 @@ def test_register_rejects_existing_username(
     }
 
     client.post("/auth/register", json=user_data)
-    response = client.post("/auth/register", json=user_data)
+    response = client.post(url, json=user_data)
 
     response_data = response.json()
 
@@ -104,7 +107,7 @@ def test_register_doesnt_return_password(
         "timezone": "Europe/Moscow"
     }
 
-    response = client.post("/auth/register", json=user_data)
+    response = client.post(url, json=user_data)
 
     response_data = response.json()
 
@@ -123,7 +126,7 @@ async def test_register_in_bd_stored_hash_not_password(
         "timezone": "Europe/Moscow"
     }
 
-    response = client.post("/auth/register", json=user_data)
+    response = client.post(url, json=user_data)
 
     assert response.status_code == status.HTTP_201_CREATED
 

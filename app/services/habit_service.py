@@ -1,10 +1,13 @@
+from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
 from app.schemas.habit import HabitCreate, HabitResponse
 from app.models.user import User
 from app.models.habit import Habit
-from typing import List
 
 
 class HabitService:
