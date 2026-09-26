@@ -9,11 +9,10 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int
     secure_cookie: bool
 
-
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
     )
-        
+
 
 settings = Settings()

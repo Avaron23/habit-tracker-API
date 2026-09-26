@@ -3,14 +3,14 @@ from datetime import timedelta
 import jwt
 import pytest
 
+from app.core.config import settings
 from app.core.security import (
+    create_access_token,
     create_refresh_token,
     get_password_hash,
     get_token_hash,
     verify_password,
-    create_access_token,
 )
-from app.core.config import settings
 
 
 def test_password_hash_is_different_from_plain_password():
@@ -63,39 +63,29 @@ def test_generated_refresh_tokens_are_unique():
 
 
 def test_access_token_contains_subject():
-    token_data = {
-        "sub": "42"
-    }
+    token_data = {"sub": "42"}
     access_token = create_access_token(token_data)
 
     payload = jwt.decode(
-        access_token,
-        settings.secret_key, 
-        algorithms=[settings.algorithm]
+        access_token, settings.secret_key, algorithms=[settings.algorithm]
     )
 
     assert payload["sub"] == token_data["sub"]
 
 
 def test_access_token_contains_expiration():
-    token_data = {
-        "sub": "42"
-    }
+    token_data = {"sub": "42"}
     access_token = create_access_token(token_data)
 
     payload = jwt.decode(
-        access_token, 
-        settings.secret_key, 
-        algorithms=[settings.algorithm]
+        access_token, settings.secret_key, algorithms=[settings.algorithm]
     )
 
     assert "exp" in payload
 
 
 def test_access_token_does_not_modify_input_data():
-    token_data = {
-        "sub": "42"
-    }
+    token_data = {"sub": "42"}
     create_access_token(token_data)
 
     assert "exp" not in token_data
@@ -105,14 +95,7 @@ def test_expired_access_token_is_rejected():
     token_data = {
         "sub": "42",
     }
-    access_token = create_access_token(
-        token_data,
-        expires_delta=timedelta(seconds=-1)
-    )
+    access_token = create_access_token(token_data, expires_delta=timedelta(seconds=-1))
 
     with pytest.raises(jwt.ExpiredSignatureError):
-        jwt.decode(
-            access_token, 
-            settings.secret_key, 
-            algorithms=[settings.algorithm]
-        )
+        jwt.decode(access_token, settings.secret_key, algorithms=[settings.algorithm])

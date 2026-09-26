@@ -7,10 +7,8 @@ from sqlalchemy.pool import NullPool
 from app.db.db import get_db
 from app.main import app
 
-
 TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres"
-    "@127.0.0.1:15433/habit_test_db"
+    "postgresql+asyncpg://postgres:postgres@127.0.0.1:15433/habit_test_db"
 )
 
 test_engine = create_async_engine(

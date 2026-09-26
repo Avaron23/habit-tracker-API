@@ -1,23 +1,22 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
-from app.models.habitlog import HabitLog
 from app.models.habit import Habit
+from app.models.habitlog import HabitLog
+from app.models.user import User
 from app.schemas.habitlog import HabitLogResponse
 
 
-
 class HabitLogService:
-
-
     # Создание лога о выполнении привычки
     @staticmethod
-    async def create_habit_log(habit_id: int, db: AsyncSession, current_user: User) -> HabitLogResponse:
+    async def create_habit_log(
+        habit_id: int, db: AsyncSession, current_user: User
+    ) -> HabitLogResponse:
 
         # 1. Ищем привычку и если ее нету выкидываем ошибку
         habit = await db.scalar(
@@ -31,7 +30,7 @@ class HabitLogService:
             raise HTTPException(status_code=404, detail="Habit not found")
 
         # 2. Проверяем периодичность привычки и делаем тайм стампы для проверки существующего лога
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
         user_timezone = current_user.timezone
 
         now_local = now_utc.astimezone(ZoneInfo(user_timezone))
@@ -53,20 +52,23 @@ class HabitLogService:
                 end = start.replace(month=start.month + 1)
         else:
             raise HTTPException(status_code=400, detail="Unknown period")
-        
+
         # 3. Переводим старт и енд обратно в utc
-        start_utc = start.astimezone(timezone.utc)
-        end_utc = end.astimezone(timezone.utc)
+        start_utc = start.astimezone(UTC)
+        end_utc = end.astimezone(UTC)
 
         # 4. Проверяем есть ли у этой привычки лог в данном периоде
         habitlog_exist = await db.scalar(
-            select(HabitLog).
-            where(HabitLog.habit_id == habit_id).
-            where(HabitLog.date >= start_utc, HabitLog.date < end_utc)
+            select(HabitLog)
+            .where(HabitLog.habit_id == habit_id)
+            .where(HabitLog.date >= start_utc, HabitLog.date < end_utc)
         )
 
         if habitlog_exist:
-            raise HTTPException(status_code=400, detail=f"Habit already logged for this {habit.period} period")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Habit already logged for this {habit.period} period",
+            )
 
         # 5. Создаём новый хэбитлог и кидаем в БД
         habitlog_bd = HabitLog(habit_id=habit_id, date=now_utc)
@@ -82,23 +84,28 @@ class HabitLogService:
         await db.refresh(habitlog_bd)
         return HabitLogResponse.model_validate(habitlog_bd)
 
-
     # Получение всех логов конкретной привычки
     @staticmethod
-    async def get_habit_logs(habit_id: int, db: AsyncSession, current_user: User) -> list[HabitLogResponse]:
+    async def get_habit_logs(
+        habit_id: int, db: AsyncSession, current_user: User
+    ) -> list[HabitLogResponse]:
 
         # 1. Ищем привычку по юзеру, если нету выкидываем 404
         habit_exist = await db.scalar(
             select(Habit)
-            .where(Habit.user_id==current_user.id)
-            .where(Habit.id==habit_id)
+            .where(Habit.user_id == current_user.id)
+            .where(Habit.id == habit_id)
         )
 
         if not habit_exist:
             raise HTTPException(status_code=404, detail="Habit not found")
 
         # 2. Получить все логи для этой привычки и вернуть их
-        result = await db.scalars(select(HabitLog).where(HabitLog.habit_id==habit_id).order_by(desc(HabitLog.date)))
+        result = await db.scalars(
+            select(HabitLog)
+            .where(HabitLog.habit_id == habit_id)
+            .order_by(desc(HabitLog.date))
+        )
         habitlogs = result.all()
 
         return [HabitLogResponse.model_validate(habitlog) for habitlog in habitlogs]

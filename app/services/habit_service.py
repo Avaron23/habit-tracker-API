@@ -1,21 +1,18 @@
-from typing import List
-
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from app.schemas.habit import HabitCreate, HabitResponse
-from app.models.user import User
 from app.models.habit import Habit
+from app.models.user import User
+from app.schemas.habit import HabitCreate, HabitResponse
 
 
 class HabitService:
-
-
     # Добавление новой привычки
     @staticmethod
-    async def create_habit(habit: HabitCreate, db: AsyncSession, current_user: User) -> HabitResponse:
+    async def create_habit(
+        habit: HabitCreate, db: AsyncSession, current_user: User
+    ) -> HabitResponse:
 
         habit_data = habit.model_dump()
 
@@ -28,34 +25,43 @@ class HabitService:
 
         return HabitResponse.model_validate(habit_bd)
 
-
     # Получение всех привычек(для конкретного пользователя)
     @staticmethod
-    async def get_habits(db: AsyncSession, current_user: User) -> List[HabitResponse]:
+    async def get_habits(db: AsyncSession, current_user: User) -> list[HabitResponse]:
 
         result = await db.scalars(select(Habit).where(Habit.user_id == current_user.id))
         habits = result.all()
 
         return [HabitResponse.model_validate(habit) for habit in habits]
 
-
     # Получение привычки по её айди
     @staticmethod
-    async def get_habit_by_id(habit_id: int, db: AsyncSession, current_user: User) -> HabitResponse:
+    async def get_habit_by_id(
+        habit_id: int, db: AsyncSession, current_user: User
+    ) -> HabitResponse:
 
-        habit = await db.scalar(select(Habit).where(Habit.user_id == current_user.id).where(Habit.id == habit_id))
+        habit = await db.scalar(
+            select(Habit)
+            .where(Habit.user_id == current_user.id)
+            .where(Habit.id == habit_id)
+        )
 
         if not habit:
             raise HTTPException(status_code=404, detail="Habit not found")
 
         return HabitResponse.model_validate(habit)
 
-
     # Изменение привычки по айди
     @staticmethod
-    async def edit_habit_by_id(habit_data: HabitCreate, habit_id: int, db: AsyncSession, current_user: User) -> HabitResponse:
+    async def edit_habit_by_id(
+        habit_data: HabitCreate, habit_id: int, db: AsyncSession, current_user: User
+    ) -> HabitResponse:
 
-        habit = await db.scalar(select(Habit).where(Habit.user_id == current_user.id).where(Habit.id == habit_id))
+        habit = await db.scalar(
+            select(Habit)
+            .where(Habit.user_id == current_user.id)
+            .where(Habit.id == habit_id)
+        )
 
         if not habit:
             raise HTTPException(status_code=404, detail="Habit not found")
@@ -70,12 +76,17 @@ class HabitService:
 
         return HabitResponse.model_validate(habit)
 
-
     # Удаление привычки по айди
     @staticmethod
-    async def delete_habit_by_id(habit_id: int, db: AsyncSession, current_user: User) -> dict:
+    async def delete_habit_by_id(
+        habit_id: int, db: AsyncSession, current_user: User
+    ) -> dict:
 
-        habit = await db.scalar(select(Habit).where(Habit.user_id == current_user.id).where(Habit.id == habit_id))
+        habit = await db.scalar(
+            select(Habit)
+            .where(Habit.user_id == current_user.id)
+            .where(Habit.id == habit_id)
+        )
 
         if not habit:
             raise HTTPException(status_code=404, detail="Habit not found")
