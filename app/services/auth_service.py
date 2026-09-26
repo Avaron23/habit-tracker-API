@@ -95,7 +95,7 @@ class AuthService:
     async def refresh(response: Response, refresh_token: str | None, db: AsyncSession) -> TokenResponse:
         # Проверяем передан ли рефреш токен
         if refresh_token is None:
-                raise HTTPException(status_code=401, detail="Refresh token missing")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing")
 
         # Хэшируем токен и ищем в бд
         refresh_token_hash = get_token_hash(refresh_token)
@@ -103,7 +103,7 @@ class AuthService:
         refresh_token_bd = await db.scalar(select(RefreshToken).where(RefreshToken.refresh_token_hash == refresh_token_hash).with_for_update())
 
         if not refresh_token_bd or refresh_token_bd.revoked or datetime.now(timezone.utc) >= refresh_token_bd.expires_at:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
         refresh_token_bd.revoked = True
 
@@ -128,7 +128,7 @@ class AuthService:
             await db.commit()
         except Exception:
             await db.rollback()
-            raise HTTPException(500, "Failed to refresh token")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to refresh token")
 
         # Вовзращаем рефреш в куки а аксес в теле
         response.set_cookie(

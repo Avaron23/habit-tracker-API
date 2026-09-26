@@ -22,10 +22,9 @@ def test_register_user_successfully(
     }
 
     response = client.post(url, json=user_data)
+    assert response.status_code == status.HTTP_201_CREATED
 
     response_data = response.json()
-
-    assert response.status_code == status.HTTP_201_CREATED
     assert response_data["username"] == user_data["username"]
     assert response_data["timezone"] == user_data["timezone"]
     assert isinstance(response_data["id"], int)
@@ -42,10 +41,9 @@ def test_register_rejects_invalid_username(client: TestClient):
     }
 
     response = client.post(url, json=user_data)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     response_data = response.json()
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert "detail" in response_data
 
 
@@ -57,10 +55,9 @@ def test_register_rejects_invalid_timezone(client: TestClient):
     }
 
     response = client.post(url, json=user_data)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     response_data = response.json()
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert "detail" in response_data
 
 
@@ -71,10 +68,9 @@ def test_register_rejects_request_data_without_required_param(client: TestClient
     }
 
     response = client.post(url, json=user_data)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     response_data = response.json()
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert "detail" in response_data
 
 
@@ -141,3 +137,21 @@ async def test_register_in_bd_stored_hash_not_password(
         user_data["password"], 
         db_user.password_hash
     )
+
+
+async def test_register_too_short_password(
+    client: TestClient,
+    clean_database
+):
+    user_data = {
+        "username": "test-user",
+        "password": "pswd",
+        "timezone": "Europe/Moscow"
+    }
+
+    response = client.post(url, json=user_data)
+
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert "detail" in response_data

@@ -76,3 +76,30 @@ async def db_session(
 ):
     async with TestSessionLocal() as session:
         yield session
+
+
+@pytest.fixture
+def registered_user(client, clean_database):
+    user_data = {
+        "username": "test-user",
+        "password": "strong-password",
+        "timezone": "Europe/Moscow",
+    }
+    client.post("/auth/register", json=user_data)
+    return user_data
+
+
+@pytest.fixture
+def login_response(client, registered_user):
+    return client.post(
+        "/auth/login",
+        data={
+            "username": registered_user["username"],
+            "password": registered_user["password"],
+        },
+    )
+
+
+@pytest.fixture
+def refresh_cookie(login_response):
+    return login_response.cookies["refresh_token"]

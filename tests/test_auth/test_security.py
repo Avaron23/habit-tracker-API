@@ -3,7 +3,6 @@ from datetime import timedelta
 import jwt
 import pytest
 
-
 from app.core.security import (
     create_refresh_token,
     get_password_hash,
