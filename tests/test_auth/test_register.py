@@ -1,11 +1,12 @@
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+import pytest
 
 from app.core.security import verify_password
 from app.models.user import User
+
 
 url = "/auth/register"
 
@@ -17,7 +18,7 @@ def test_register_user_successfully(
     user_data = {
         "username": "test-user",
         "password": "strong-password",
-        "timezone": "Europe/Moscow",
+        "timezone": "Europe/Moscow"
     }
 
     response = client.post(url, json=user_data)
@@ -36,7 +37,7 @@ def test_register_rejects_invalid_username(client: TestClient):
     user_data = {
         "username": "invalid user !",
         "password": "strong-password",
-        "timezone": "Europe/Moscow",
+        "timezone": "Europe/Moscow"
     }
 
     response = client.post(url, json=user_data)
@@ -50,7 +51,7 @@ def test_register_rejects_invalid_timezone(client: TestClient):
     user_data = {
         "username": "test-user",
         "password": "strong-password",
-        "timezone": "Invalid timezone",
+        "timezone": "Invalid timezone"
     }
 
     response = client.post(url, json=user_data)
@@ -61,7 +62,10 @@ def test_register_rejects_invalid_timezone(client: TestClient):
 
 
 def test_register_rejects_request_data_without_required_param(client: TestClient):
-    user_data = {"password": "strong-password", "timezone": "Invalid timezone"}
+    user_data = {
+        "password": "strong-password",
+        "timezone": "Invalid timezone"
+    }
 
     response = client.post(url, json=user_data)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
@@ -70,11 +74,14 @@ def test_register_rejects_request_data_without_required_param(client: TestClient
     assert "detail" in response_data
 
 
-def test_register_rejects_existing_username(client: TestClient, clean_database):
+def test_register_rejects_existing_username(
+    client: TestClient, 
+    clean_database
+):
     user_data = {
         "username": "test-user",
         "password": "strong-password",
-        "timezone": "Europe/Moscow",
+        "timezone": "Europe/Moscow"
     }
 
     client.post("/auth/register", json=user_data)
@@ -86,11 +93,14 @@ def test_register_rejects_existing_username(client: TestClient, clean_database):
     assert "detail" in response_data
 
 
-def test_register_doesnt_return_password(client: TestClient, clean_database):
+def test_register_doesnt_return_password(
+    client: TestClient,
+    clean_database
+):
     user_data = {
         "username": "test-user",
         "password": "strong-password",
-        "timezone": "Europe/Moscow",
+        "timezone": "Europe/Moscow"
     }
 
     response = client.post(url, json=user_data)
@@ -103,12 +113,13 @@ def test_register_doesnt_return_password(client: TestClient, clean_database):
 
 @pytest.mark.anyio
 async def test_register_in_bd_stored_hash_not_password(
-    client: TestClient, db_session: AsyncSession
+    client: TestClient,
+    db_session: AsyncSession
 ):
     user_data = {
         "username": "test-user",
         "password": "strong-password",
-        "timezone": "Europe/Moscow",
+        "timezone": "Europe/Moscow"
     }
 
     response = client.post(url, json=user_data)
@@ -116,19 +127,26 @@ async def test_register_in_bd_stored_hash_not_password(
     assert response.status_code == status.HTTP_201_CREATED
 
     db_user = await db_session.scalar(
-        select(User).where(User.username == user_data["username"])
+        select(User)
+        .where(User.username == user_data["username"])
     )
 
     assert db_user is not None
     assert user_data["password"] != db_user.password_hash
-    assert verify_password(user_data["password"], db_user.password_hash)
+    assert verify_password(
+        user_data["password"], 
+        db_user.password_hash
+    )
 
 
-async def test_register_too_short_password(client: TestClient, clean_database):
+async def test_register_too_short_password(
+    client: TestClient,
+    clean_database
+):
     user_data = {
         "username": "test-user",
         "password": "pswd",
-        "timezone": "Europe/Moscow",
+        "timezone": "Europe/Moscow"
     }
 
     response = client.post(url, json=user_data)
