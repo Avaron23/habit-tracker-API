@@ -83,8 +83,8 @@ def registered_user(client, clean_database):
         "password": "strong-password",
         "timezone": "Europe/Moscow",
     }
-    client.post("/auth/register", json=user_data)
-    return user_data
+    r = client.post("/auth/register", json=user_data)
+    return {**user_data, "id": r.json()["id"]}
 
 
 @pytest.fixture
@@ -101,3 +101,13 @@ def login_response(client, registered_user):
 @pytest.fixture
 def refresh_cookie(login_response):
     return login_response.cookies["refresh_token"]
+
+
+@pytest.fixture
+def access_token(login_response):
+    return login_response.json()["access_token"]   # ← из body
+
+
+@pytest.fixture
+def auth_headers(access_token):
+    return {"Authorization": f"Bearer {access_token}"}

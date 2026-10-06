@@ -59,7 +59,7 @@ async def test_logout_success_refresh_revoked(
     assert refresh_token.revoked
 
 
-def test_logout_success_refresh_cookie_not_usable(
+def test_logout_after_refresh_cookie_not_usable(
     client: TestClient,
     login_response
 ):
@@ -69,3 +69,15 @@ def test_logout_success_refresh_cookie_not_usable(
 
     refresh_response = client.post("/auth/refresh") 
     assert refresh_response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_logout_works_without_cookie(
+    client: TestClient,
+    login_response
+):
+    client.cookies["refresh_token"] = ""
+    response = client.post(url)
+    assert response.status_code == status.HTTP_200_OK
+
+    response_data = response.json()
+    assert response_data["message"] == "Logout success"

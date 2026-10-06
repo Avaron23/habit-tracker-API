@@ -13,3 +13,6 @@ wheels/
 .idea/.gitignore
 .idea/habit-tracker-API.iml
 .idea/
+
+.pytest_cache/
+.ruff_cache/
