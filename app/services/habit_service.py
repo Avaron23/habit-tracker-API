@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,7 +47,7 @@ class HabitService:
         )
 
         if not habit:
-            raise HTTPException(status_code=404, detail="Habit not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found")
 
         return HabitResponse.model_validate(habit)
 
@@ -64,7 +64,7 @@ class HabitService:
         )
 
         if not habit:
-            raise HTTPException(status_code=404, detail="Habit not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found")
 
         habit_data_dict = habit_data.model_dump()
 
@@ -89,7 +89,7 @@ class HabitService:
         )
 
         if not habit:
-            raise HTTPException(status_code=404, detail="Habit not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found")
 
         await db.delete(habit)
         await db.commit()

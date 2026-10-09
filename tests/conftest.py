@@ -111,3 +111,29 @@ def access_token(login_response):
 @pytest.fixture
 def auth_headers(access_token):
     return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+def second_user(client, clean_database):
+    user_data = {
+        "username": "test-user2",
+        "password": "strong-password",
+        "timezone": "Europe/Moscow",
+    }
+    reg_res = client.post("/auth/register", json=user_data)
+    log_res = client.post(
+        "/auth/login",
+        data={
+            "username": user_data["username"],
+            "password": user_data["password"],
+        },
+    )
+    user_data["headers"] = {"Authorization": f"Bearer {log_res.json()["access_token"]}"}
+    habit_data = {
+        "title": "some-title",
+        "description": "some-description",
+        "period": "daily"
+    }
+    hab_res = client.post("/habits", json=habit_data, headers=user_data["headers"])
+    user_data["habit_id"] = hab_res.json()["id"] 
+    return user_data

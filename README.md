@@ -121,7 +121,6 @@ Authorization: Bearer <access_token>
 {
   "title": "Read",
   "description": "Read every day",
-  "goal": 1,
   "period": "daily"
 }
 ```

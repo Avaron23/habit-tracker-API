@@ -1,7 +1,6 @@
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from app.models.refresh_token import RefreshToken
 from app.core.security import create_access_token
 
 

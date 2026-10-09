@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +11,7 @@ from app.services.habit_service import HabitService
 router = APIRouter(prefix="/habits", tags=["Habits"])
 
 
-@router.post("/", response_model=HabitResponse)
+@router.post("/", response_model=HabitResponse, status_code=status.HTTP_201_CREATED)
 async def create_habit(
     habit: HabitCreate,
     db: AsyncSession = Depends(get_db),

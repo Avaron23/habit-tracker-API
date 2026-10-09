@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import settings
-from app.db.base import Base
+from app.models.base import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -79,6 +79,7 @@ async def run_async_migrations() -> None:
     await connectable.dispose()
 
 
+print("TABLES:", list(target_metadata.tables.keys()))
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 
