@@ -114,6 +114,16 @@ def auth_headers(access_token):
 
 
 @pytest.fixture
+def habit_create_response(client, auth_headers):
+    habit_data = {
+        "title": "some-title",
+        "description": "some-description",
+        "period": "daily"
+    }
+    return client.post("/habits", json=habit_data, headers=auth_headers)
+    
+
+@pytest.fixture
 def second_user(client, clean_database):
     user_data = {
         "username": "test-user2",
