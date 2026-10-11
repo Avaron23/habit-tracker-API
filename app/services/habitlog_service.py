@@ -9,6 +9,7 @@ from app.models.habitlog import HabitLog
 from app.models.user import User
 from app.schemas.habitlog import HabitLogResponse
 from app.services.calculate_period_bounds import calculate_period_bounds
+from app.services.get_now_utc import get_now_utc
 
 
 class HabitLogService:
@@ -30,7 +31,7 @@ class HabitLogService:
             raise HTTPException(status_code=404, detail="Habit not found")
 
         # 2. Проверяем периодичность привычки и делаем тайм стампы для проверки существующего лога
-        now_utc = datetime.now(UTC)
+        now_utc = get_now_utc()
         user_timezone = current_user.timezone
 
         times_info = calculate_period_bounds(now_utc, user_timezone, habit.period)

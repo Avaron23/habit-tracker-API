@@ -1,6 +1,8 @@
+from datetime import datetime, UTC, timedelta
+
 from fastapi import status
 from fastapi.testclient import TestClient
-
+from unittest.mock import patch
 
 url = "/habitlogs"
 
@@ -83,3 +85,22 @@ def test_habitlogs_history_for_forbidden_habit_returns_error(
     response = client.get(url+f"/{second_user_habit_id}", headers=auth_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Habit not found"
+
+
+@patch("app.services.habitlog_service.get_now_utc")
+def test_habitlogs_new_mark_in_another_day_success(
+    mock_now,
+    client: TestClient,
+    auth_headers,
+    habit_create_response,
+):
+    habit_id = habit_create_response.json()["id"]
+
+    mock_now.return_value = datetime(2026, 10, 11, 12, 30, tzinfo=UTC)
+    first_res = client.post(url+f"/{habit_id}", headers=auth_headers)
+    assert first_res.status_code == status.HTTP_201_CREATED
+
+    mock_now.return_value = datetime(2026, 10, 12, 12, 30, tzinfo=UTC)
+    response = client.post(url+f"/{habit_id}", headers=auth_headers)
+    assert response.status_code == status.HTTP_201_CREATED
+    assert datetime.fromisoformat(response.json()["date"]) == datetime(2026, 10, 12, 12, 30, tzinfo=UTC)
