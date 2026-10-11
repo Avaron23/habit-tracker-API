@@ -1,5 +1,4 @@
-from datetime import UTC, datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, UTC
 
 from fastapi import HTTPException
 from sqlalchemy import desc, select
@@ -9,6 +8,7 @@ from app.models.habit import Habit
 from app.models.habitlog import HabitLog
 from app.models.user import User
 from app.schemas.habitlog import HabitLogResponse
+from app.services.calculate_period_bounds import calculate_period_bounds
 
 
 class HabitLogService:
@@ -33,29 +33,10 @@ class HabitLogService:
         now_utc = datetime.now(UTC)
         user_timezone = current_user.timezone
 
-        now_local = now_utc.astimezone(ZoneInfo(user_timezone))
+        times_info = calculate_period_bounds(now_utc, user_timezone, habit.period)
 
-        if habit.period == "daily":
-            start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
-            end = start + timedelta(days=1)
-        elif habit.period == "weekly":
-            start = (now_local - timedelta(now_local.weekday())).replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
-            end = start + timedelta(days=7)
-        elif habit.period == "monthly":
-            start = now_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-            if start.month == 12:
-                end = start.replace(year=start.year + 1, month=1)
-            else:
-                end = start.replace(month=start.month + 1)
-        else:
-            raise HTTPException(status_code=400, detail="Unknown period")
-
-        # 3. Переводим старт и енд обратно в utc
-        start_utc = start.astimezone(UTC)
-        end_utc = end.astimezone(UTC)
+        start_utc = times_info["start"]
+        end_utc = times_info["end"]
 
         # 4. Проверяем есть ли у этой привычки лог в данном периоде
         habitlog_exist = await db.scalar(
