@@ -69,7 +69,7 @@ class HabitLogService:
     # Получение всех логов конкретной привычки
     @staticmethod
     async def get_habit_logs(
-        habit_id: int, db: AsyncSession, current_user: User
+        habit_id: int, db: AsyncSession, current_user: User, limit: int, offset: int
     ) -> list[HabitLogResponse]:
 
         # 1. Ищем привычку по юзеру, если нету выкидываем 404
@@ -87,6 +87,8 @@ class HabitLogService:
             select(HabitLog)
             .where(HabitLog.habit_id == habit_id)
             .order_by(desc(HabitLog.date))
+            .limit(limit)
+            .offset(offset)
         )
         habitlogs = result.all()
 

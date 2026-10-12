@@ -207,3 +207,25 @@ def test_habits_user_cannot_access_other_users_habit(
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_habits_pagination_working(
+    client: TestClient,
+    auth_headers
+):
+    habit_data = {
+        "title": "some-title",
+        "description": "some-description",
+        "period": "daily"
+    }
+    for i in range(3):
+        client.post(url, json=habit_data, headers=auth_headers)
+
+    response = client.get(url, params={"limit": 1, "offset": 0}, headers=auth_headers)
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.json()) < 2
+
+    sec_response = client.get(url, params={"limit": 1, "offset": 1}, headers=auth_headers)
+    assert sec_response.status_code == status.HTTP_200_OK
+    assert len(sec_response.json()) < 2
+    assert sec_response.json()[0]["id"] == 2

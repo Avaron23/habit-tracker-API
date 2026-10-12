@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.habit import Habit
@@ -27,9 +27,15 @@ class HabitService:
 
     # Получение всех привычек(для конкретного пользователя)
     @staticmethod
-    async def get_habits(db: AsyncSession, current_user: User) -> list[HabitResponse]:
+    async def get_habits(db: AsyncSession, current_user: User, limit: int, offset: int) -> list[HabitResponse]:
 
-        result = await db.scalars(select(Habit).where(Habit.user_id == current_user.id))
+        result = await db.scalars(
+            select(Habit)
+            .where(Habit.user_id == current_user.id)
+            .order_by(desc(Habit.created_at))
+            .limit(limit)
+            .offset(offset)
+        )
         habits = result.all()
 
         return [HabitResponse.model_validate(habit) for habit in habits]

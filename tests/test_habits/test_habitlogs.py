@@ -104,3 +104,34 @@ def test_habitlogs_new_mark_in_another_day_success(
     response = client.post(url+f"/{habit_id}", headers=auth_headers)
     assert response.status_code == status.HTTP_201_CREATED
     assert datetime.fromisoformat(response.json()["date"]) == datetime(2026, 10, 12, 12, 30, tzinfo=UTC)
+
+
+@patch("app.services.habitlog_service.get_now_utc")
+def test_habitlogs_pagination_working(
+    mock_now,
+    client: TestClient,
+    auth_headers,
+    habit_create_response,
+):
+    habit_id = habit_create_response.json()["id"]
+
+    mock_now.return_value = datetime(2026, 10, 11, 12, 30, tzinfo=UTC)
+    first_res = client.post(url+f"/{habit_id}", headers=auth_headers)
+    assert first_res.status_code == status.HTTP_201_CREATED
+
+    mock_now.return_value = datetime(2026, 10, 12, 12, 30, tzinfo=UTC)
+    sec_response = client.post(url+f"/{habit_id}", headers=auth_headers)
+    assert sec_response.status_code == status.HTTP_201_CREATED
+
+    mock_now.return_value = datetime(2026, 10, 13, 12, 30, tzinfo=UTC)
+    first_res = client.post(url+f"/{habit_id}", headers=auth_headers)
+    assert first_res.status_code == status.HTTP_201_CREATED
+
+    response = client.get(url+f"/{habit_id}", params={"limit": 1, "offset": 0}, headers=auth_headers)
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.json()) < 2
+
+    second_response = client.get(url+f"/{habit_id}", params={"limit": 1, "offset": 1}, headers=auth_headers)
+    assert second_response.status_code == status.HTTP_200_OK
+    assert len(second_response.json()) < 2
+    assert second_response.json()[0]["id"] == 2
