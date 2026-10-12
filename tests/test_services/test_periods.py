@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from app.services.calculate_period_bounds import calculate_period_bounds
 
@@ -81,5 +81,5 @@ def test_periods_unknown_period():
             habit_period="unknown-period"
         )
 
-        exc_info["status_code"] == 400
-        exc_info["detail"] == "Unknown period"
+    assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+    assert exc_info.value.detail == "Unknown period"
