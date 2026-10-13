@@ -30,7 +30,11 @@ jobs:
 
     env:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/habit_tracker_test
-
+      SECRET_KEY: "ci-test-secret-key-not-for-production"
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 30
+      SECURE_COOKIE: "false"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
