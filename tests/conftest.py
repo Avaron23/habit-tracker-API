@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
@@ -7,8 +9,9 @@ from sqlalchemy.pool import NullPool
 from app.db.db import get_db
 from app.main import app
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres@127.0.0.1:15433/habit_test_db"
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@127.0.0.1:15433/habit_test_db",
 )
 
 test_engine = create_async_engine(
