@@ -124,6 +124,7 @@ async def test_register_in_bd_stored_hash_not_password(
     assert verify_password(user_data["password"], db_user.password_hash)
 
 
+@pytest.mark.anyio
 async def test_register_too_short_password(client: TestClient, clean_database):
     user_data = {
         "username": "test-user",

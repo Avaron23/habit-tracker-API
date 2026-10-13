@@ -34,7 +34,7 @@ class HabitService:
         result = await db.scalars(
             select(Habit)
             .where(Habit.user_id == current_user.id)
-            .order_by(desc(Habit.created_at))
+            .order_by(desc(Habit.created_at), desc(Habit.id))
             .limit(limit)
             .offset(offset)
         )

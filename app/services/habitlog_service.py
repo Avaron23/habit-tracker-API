@@ -27,7 +27,9 @@ class HabitLogService:
         )
 
         if not habit:
-            raise HTTPException(status_code=404, detail="Habit not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found"
+            )
 
         # 2. Проверяем периодичность привычки и делаем тайм стампы для проверки существующего лога
         now_utc = get_now_utc()
@@ -47,7 +49,7 @@ class HabitLogService:
 
         if habitlog_exist:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Habit already logged for this {habit.period} period",
             )
 
@@ -82,13 +84,15 @@ class HabitLogService:
         )
 
         if not habit_exist:
-            raise HTTPException(status_code=404, detail="Habit not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found"
+            )
 
         # 2. Получить все логи для этой привычки и вернуть их
         result = await db.scalars(
             select(HabitLog)
             .where(HabitLog.habit_id == habit_id)
-            .order_by(desc(HabitLog.date))
+            .order_by(desc(HabitLog.date), desc(HabitLog.id))
             .limit(limit)
             .offset(offset)
         )
