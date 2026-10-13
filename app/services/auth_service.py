@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, Response, status
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -91,7 +91,7 @@ class AuthService:
         try:
             db.add(refresh_token_bd)
             await db.commit()
-        except Exception:
+        except SQLAlchemyError:
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -163,7 +163,7 @@ class AuthService:
         try:
             db.add(refresh_token_new_bd)
             await db.commit()
-        except Exception:
+        except SQLAlchemyError:
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

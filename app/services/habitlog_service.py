@@ -1,7 +1,6 @@
-from datetime import datetime, UTC
-
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import desc, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.habit import Habit
@@ -58,9 +57,12 @@ class HabitLogService:
         try:
             db.add(habitlog_bd)
             await db.commit()
-        except Exception:
+        except SQLAlchemyError:
             await db.rollback()
-            raise HTTPException(status_code=500, detail="Failed to create habit log")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create habit log",
+            )
 
         # 6. Обновляем и возвращаем
         await db.refresh(habitlog_bd)

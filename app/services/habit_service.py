@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.habit import Habit
@@ -27,7 +27,9 @@ class HabitService:
 
     # Получение всех привычек(для конкретного пользователя)
     @staticmethod
-    async def get_habits(db: AsyncSession, current_user: User, limit: int, offset: int) -> list[HabitResponse]:
+    async def get_habits(
+        db: AsyncSession, current_user: User, limit: int, offset: int
+    ) -> list[HabitResponse]:
 
         result = await db.scalars(
             select(Habit)
@@ -53,7 +55,9 @@ class HabitService:
         )
 
         if not habit:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found"
+            )
 
         return HabitResponse.model_validate(habit)
 
@@ -70,7 +74,9 @@ class HabitService:
         )
 
         if not habit:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found"
+            )
 
         habit_data_dict = habit_data.model_dump()
 
@@ -95,7 +101,9 @@ class HabitService:
         )
 
         if not habit:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Habit not found"
+            )
 
         await db.delete(habit)
         await db.commit()

@@ -1,11 +1,10 @@
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.refresh_token import RefreshToken
-
 
 url = "/auth/logout"
 
@@ -19,10 +18,7 @@ def test_logout_success(
     assert response.json()["message"] == "Logout success"
 
 
-def test_logout_success_delete_refresh_cookie(
-    client: TestClient,
-    login_response
-):
+def test_logout_success_delete_refresh_cookie(client: TestClient, login_response):
     response = client.post(url)
     assert "refresh_token" not in response.cookies
     assert "refresh_token" not in client.cookies
@@ -30,8 +26,7 @@ def test_logout_success_delete_refresh_cookie(
 
 @pytest.mark.anyio
 async def test_logout_success_refresh_revoked(
-    client: TestClient,
-    db_session: AsyncSession
+    client: TestClient, db_session: AsyncSession
 ):
     user_data = {
         "username": "test-user",
@@ -59,22 +54,16 @@ async def test_logout_success_refresh_revoked(
     assert refresh_token.revoked
 
 
-def test_logout_after_refresh_cookie_not_usable(
-    client: TestClient,
-    login_response
-):
+def test_logout_after_refresh_cookie_not_usable(client: TestClient, login_response):
     refresh_token = client.cookies["refresh_token"]
-    response = client.post(url)
+    client.post(url)
     client.cookies["refresh_token"] = refresh_token
 
-    refresh_response = client.post("/auth/refresh") 
+    refresh_response = client.post("/auth/refresh")
     assert refresh_response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_logout_works_without_cookie(
-    client: TestClient,
-    login_response
-):
+def test_logout_works_without_cookie(client: TestClient, login_response):
     client.cookies["refresh_token"] = ""
     response = client.post(url)
     assert response.status_code == status.HTTP_200_OK

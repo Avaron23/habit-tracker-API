@@ -105,7 +105,7 @@ def refresh_cookie(login_response):
 
 @pytest.fixture
 def access_token(login_response):
-    return login_response.json()["access_token"]   # ← из body
+    return login_response.json()["access_token"]  # ← из body
 
 
 @pytest.fixture
@@ -118,10 +118,10 @@ def habit_create_response(client, auth_headers):
     habit_data = {
         "title": "some-title",
         "description": "some-description",
-        "period": "daily"
+        "period": "daily",
     }
     return client.post("/habits", json=habit_data, headers=auth_headers)
-    
+
 
 @pytest.fixture
 def second_user(client, clean_database):
@@ -130,7 +130,7 @@ def second_user(client, clean_database):
         "password": "strong-password",
         "timezone": "Europe/Moscow",
     }
-    reg_res = client.post("/auth/register", json=user_data)
+    client.post("/auth/register", json=user_data)
     log_res = client.post(
         "/auth/login",
         data={
@@ -138,12 +138,12 @@ def second_user(client, clean_database):
             "password": user_data["password"],
         },
     )
-    user_data["headers"] = {"Authorization": f"Bearer {log_res.json()["access_token"]}"}
+    user_data["headers"] = {"Authorization": f"Bearer {log_res.json()['access_token']}"}
     habit_data = {
         "title": "some-title",
         "description": "some-description",
-        "period": "daily"
+        "period": "daily",
     }
     hab_res = client.post("/habits", json=habit_data, headers=user_data["headers"])
-    user_data["habit_id"] = hab_res.json()["id"] 
+    user_data["habit_id"] = hab_res.json()["id"]
     return user_data

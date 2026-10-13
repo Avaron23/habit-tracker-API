@@ -80,6 +80,8 @@ async def run_async_migrations() -> None:
 
 
 print("TABLES:", list(target_metadata.tables.keys()))
+
+
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 

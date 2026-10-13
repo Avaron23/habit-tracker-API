@@ -5,11 +5,9 @@ from fastapi import HTTPException
 
 
 def calculate_period_bounds(
-    now_utc: datetime,
-    user_timezone: str,
-    habit_period: str 
+    now_utc: datetime, user_timezone: str, habit_period: str
 ) -> dict:
-    
+
     now_local = now_utc.astimezone(ZoneInfo(user_timezone))
 
     if habit_period == "daily":
@@ -30,7 +28,4 @@ def calculate_period_bounds(
     else:
         raise HTTPException(status_code=400, detail="Unknown period")
 
-    return {
-        "start": start.astimezone(UTC),
-        "end": end.astimezone(UTC)
-    }
+    return {"start": start.astimezone(UTC), "end": end.astimezone(UTC)}
